@@ -59,9 +59,10 @@
   {:width  24
    :height 24})
 
-(def nav-item-button
+(defnstyle nav-item-button [unread-messages?]
   {:padding-vertical   16
-   :padding-horizontal 13})
+   :padding-left 13
+   :padding-right (if unread-messages? -6 13)})
 
 (defstyle item
   {:ios     {:padding-horizontal 12
@@ -88,6 +89,6 @@
 (def ios-content-item {:position :absolute :right 40 :left 40})
 
 (def counter-container
-  {:position :absolute
+  {:padding-horizontal 3
    :top      19
    :right    0})
