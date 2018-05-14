@@ -34,7 +34,9 @@
      {:db (update db :contacts/contacts #(merge contacts %))})))
 
 (defn- add-new-contact [{:keys [whisper-identity] :as contact} {:keys [db]}]
-  (let [new-contact (assoc contact :pending? false)]
+  (let [new-contact (assoc contact
+                           :pending?   false
+                           :public-key whisper-identity)]
     {:db                      (-> db
                                   (update-in [:contacts/contacts whisper-identity] merge new-contact)
                                   (assoc-in [:contacts/new-identity] ""))
