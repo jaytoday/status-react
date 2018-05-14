@@ -68,13 +68,16 @@
   (re-frame/dispatch [::transaction-completed {:id (name (key result)) :response (second result)} modal?]))
 ;;;; Handlers
 
+(defn set-and-validate-amount-db [db amount]
+  (let [{:keys [value error]} (wallet.db/parse-amount amount)]
+    (-> db
+        (assoc-in [:wallet :send-transaction :amount] (money/ether->wei value))
+        (assoc-in [:wallet :send-transaction :amount-error] error))))
+
 (handlers/register-handler-fx
  :wallet.send/set-and-validate-amount
  (fn [{:keys [db]} [_ amount]]
-   (let [{:keys [value error]} (wallet.db/parse-amount amount)]
-     {:db (-> db
-              (assoc-in [:wallet :send-transaction :amount] (money/ether->wei value))
-              (assoc-in [:wallet :send-transaction :amount-error] error))})))
+   {:db (set-and-validate-amount-db db amount)}))
 
 (handlers/register-handler-fx
  :wallet.send/set-symbol

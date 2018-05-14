@@ -13,7 +13,11 @@
             [status-im.utils.datetime :as time]
             [status-im.utils.handlers :as handlers]
             [status-im.utils.random :as random]
-            [status-im.i18n :as i18n]))
+            [status-im.i18n :as i18n]
+            [status-im.ui.screens.navigation :as navigation]
+            [status-im.ui.screens.wallet.choose-recipient.events :as choose-recipient.events]
+            [status-im.ui.screens.wallet.send.events :as send.events]
+            [status-im.utils.money :as money]))
 
 ;;;; Effects
 
@@ -376,11 +380,28 @@
                                  :chat-id      current-chat-id
                                  :identity     current-public-key})))
 
+(def shortcuts
+  {"send" [:amount]})
+
+(defn shortcut-override? [{:keys [command]}]
+  (get shortcuts (:name command)))
+
+(defn shortcut-override-fx [db chat-command chat-id]
+  (let [amount (-> chat-command :args first)
+        contact (get-in db [:contacts/contacts chat-id])]
+    #_(js/alert (-> chat-command :args first money/bignumber money/ether->wei))
+    {:db (-> db
+             (send.events/set-and-validate-amount-db amount)
+             (choose-recipient.events/fill-request-details (select-keys contact [:name :address :whisper-identity]))
+             (navigation/navigate-to :wallet-send-transaction)
+             (assoc-in [:chats chat-id :input-text] ""))}))
+
 (handlers/register-handler-fx
  :send-current-message
  message-model/send-interceptors
  (fn [{{:keys [current-chat-id current-public-key] :as db} :db message-id :random-id current-time :now
        :as cofx} _]
+   #_(js/alert current-chat-id)
    (when-not (get-in db [:chat-ui-props current-chat-id :sending-in-progress?])
      (let [input-text   (get-in db [:chats current-chat-id :input-text])
            chat-command (-> (input-model/selected-chat-command db)
@@ -389,10 +410,13 @@
                                     (assoc selected-command :args
                                            (get-in db [:chats current-chat-id :seq-arguments]))
                                     (update selected-command :args (partial remove string/blank?)))))]
+       #_(js/alert chat-command)
        (if (:command chat-command)
           ;; Returns true if current input contains command
          (if (command-complete? chat-command)
-           (command-complete-fx db chat-command message-id current-time)
+           (if (shortcut-override? chat-command)
+             (shortcut-override-fx db chat-command current-chat-id)
+             (command-complete-fx db chat-command message-id current-time))
            (command-not-complete-fx db input-text))
          (plain-text-message-fx db cofx input-text current-chat-id current-public-key))))))
 
