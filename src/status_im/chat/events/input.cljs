@@ -325,18 +325,23 @@
                   proceed-events)]
      {:dispatch-n events})))
 
-(defn clean-current-chat-command [db]
+(defn cleanup-chat-command [db]
   (-> (model/set-chat-ui-props db {:sending-in-progress? false})
       (clear-seq-arguments)
       (set-chat-input-metadata nil)
       (set-chat-input-text nil)))
 
 (handlers/register-handler-fx
+ :cleanup-chat-command
+ (fn [{:keys [db]}]
+   {:db (cleanup-chat-command db)}))
+
+(handlers/register-handler-fx
  ::send-command
  message-model/send-interceptors
  (fn [{:keys [db] :as cofx} [command-message]]
    (let [{:keys [current-chat-id current-public-key]} db
-         new-db  (clean-current-chat-command db)
+         new-db  (cleanup-chat-command db)
          address (get-in db [:account/account :address])]
      (merge {:db new-db}
             (message-model/process-command (assoc cofx :db new-db)
@@ -389,6 +394,7 @@
                                     (assoc selected-command :args
                                            (get-in db [:chats current-chat-id :seq-arguments]))
                                     (update selected-command :args (partial remove string/blank?)))))]
+       (js/alert (command-complete? chat-command))
        (if (:command chat-command)
           ;; Returns true if current input contains command
          (if (command-complete? chat-command)
