@@ -5,10 +5,7 @@
             [status-im.utils.handlers :as handlers]
             [status-im.i18n :as i18n]
             [status-im.utils.platform :as platform]
-            [status-im.ui.screens.wallet.send.events :as send.events]
-            [status-im.ui.screens.wallet.choose-recipient.events :as choose-recipient.events]
-            [status-im.chat.events.input :as events.input]
-            [status-im.ui.screens.navigation :as navigation]))
+            [status-im.chat.events.shortcuts :as shortcuts]))
 
 ;;;; Helper fns
 
@@ -57,27 +54,12 @@
    (when proceed-event-creator
      {:dispatch (proceed-event-creator returned)})))
 
-(def shortcuts
-  {"send" [:amount]})
-
-(defn shortcut-override? [message]
-  (get shortcuts (get-in message [:content :command])))
-
-(defn shortcut-override-fx [db {:keys [chat-id content]}]
-  (let [amount  (get-in content [:params :amount])
-        contact (get-in db [:contacts/contacts chat-id])]
-    {:db (-> db
-             (send.events/set-and-validate-amount-db amount)
-             (choose-recipient.events/fill-request-details (select-keys contact [:name :address :whisper-identity]))
-             (navigation/navigate-to :wallet-send-transaction)
-             (events.input/clean-current-chat-command))}))
-
 (handlers/register-handler-fx
  :request-command-message-data
  [re-frame/trim-v (re-frame/inject-cofx :data-store/get-local-storage-data)]
  (fn [{:keys [db]} [message opts]]
-   (if (shortcut-override? message)
-     (shortcut-override-fx db message)
+   (if (shortcuts/shortcut-override? message)
+     (shortcuts/shortcut-override-fx db message)
      (request-command-message-data db message opts))))
 
 (handlers/register-handler-fx
