@@ -10,14 +10,7 @@
             [status-im.chat.events.commands :as commands-events]
             [status-im.bots.events :as bots-events]
             [status-im.ui.components.react :as react-comp]
-            [status-im.utils.datetime :as time]
-            [status-im.utils.handlers :as handlers]
-            [status-im.utils.random :as random]
-            [status-im.i18n :as i18n]
-            [status-im.ui.screens.navigation :as navigation]
-            [status-im.ui.screens.wallet.choose-recipient.events :as choose-recipient.events]
-            [status-im.ui.screens.wallet.send.events :as send.events]
-            [status-im.utils.money :as money]))
+            [status-im.utils.handlers :as handlers]))
 
 ;;;; Effects
 
@@ -332,15 +325,18 @@
                   proceed-events)]
      {:dispatch-n events})))
 
+(defn clean-current-chat-command [db]
+  (-> (model/set-chat-ui-props db {:sending-in-progress? false})
+      (clear-seq-arguments)
+      (set-chat-input-metadata nil)
+      (set-chat-input-text nil)))
+
 (handlers/register-handler-fx
  ::send-command
  message-model/send-interceptors
  (fn [{:keys [db] :as cofx} [command-message]]
    (let [{:keys [current-chat-id current-public-key]} db
-         new-db  (-> (model/set-chat-ui-props db {:sending-in-progress? false})
-                     (clear-seq-arguments)
-                     (set-chat-input-metadata nil)
-                     (set-chat-input-text nil))
+         new-db  (clean-current-chat-command db)
          address (get-in db [:account/account :address])]
      (merge {:db new-db}
             (message-model/process-command (assoc cofx :db new-db)
@@ -380,28 +376,11 @@
                                  :chat-id      current-chat-id
                                  :identity     current-public-key})))
 
-(def shortcuts
-  {"send" [:amount]})
-
-(defn shortcut-override? [{:keys [command]}]
-  (get shortcuts (:name command)))
-
-(defn shortcut-override-fx [db chat-command chat-id]
-  (let [amount (-> chat-command :args first)
-        contact (get-in db [:contacts/contacts chat-id])]
-    #_(js/alert (-> chat-command :args first money/bignumber money/ether->wei))
-    {:db (-> db
-             (send.events/set-and-validate-amount-db amount)
-             (choose-recipient.events/fill-request-details (select-keys contact [:name :address :whisper-identity]))
-             (navigation/navigate-to :wallet-send-transaction)
-             (assoc-in [:chats chat-id :input-text] ""))}))
-
 (handlers/register-handler-fx
  :send-current-message
  message-model/send-interceptors
  (fn [{{:keys [current-chat-id current-public-key] :as db} :db message-id :random-id current-time :now
        :as cofx} _]
-   #_(js/alert current-chat-id)
    (when-not (get-in db [:chat-ui-props current-chat-id :sending-in-progress?])
      (let [input-text   (get-in db [:chats current-chat-id :input-text])
            chat-command (-> (input-model/selected-chat-command db)
@@ -410,13 +389,10 @@
                                     (assoc selected-command :args
                                            (get-in db [:chats current-chat-id :seq-arguments]))
                                     (update selected-command :args (partial remove string/blank?)))))]
-       #_(js/alert chat-command)
        (if (:command chat-command)
           ;; Returns true if current input contains command
          (if (command-complete? chat-command)
-           (if (shortcut-override? chat-command)
-             (shortcut-override-fx db chat-command current-chat-id)
-             (command-complete-fx db chat-command message-id current-time))
+           (command-complete-fx db chat-command message-id current-time)
            (command-not-complete-fx db input-text))
          (plain-text-message-fx db cofx input-text current-chat-id current-public-key))))))
 

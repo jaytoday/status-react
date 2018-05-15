@@ -50,6 +50,51 @@ var paramsGroupSend = [recipientSendParam, amountSendParam()];
 
 function validateSend(validateRecipient, params, context) {
 
+
+    if (!params["amount"]) {
+        return {
+            markup: status.components.validationMessage(
+                I18n.t('validation_title'),
+                I18n.t('validation_amount_specified')
+            )
+        };
+    }
+
+    var amount = params["amount"].replace(",", ".");
+    var amountSplitted = amount.split(".");
+    if (amountSplitted.length === 2 && amountSplitted[1].length > 18) {
+        return {
+            markup: status.components.validationMessage(
+                I18n.t('validation_title'),
+                I18n.t('validation_amount_is_too_small')
+            )
+        };
+    }
+
+    if (isNaN(parseFloat(params.amount.replace(",", ".")))) {
+        return {
+            markup: status.components.validationMessage(
+                I18n.t('validation_title'),
+                I18n.t('validation_invalid_number')
+            )
+        };
+    }
+
+    try {
+        var val = web3.toWei(amount, "ether");
+        if (val < 0) {
+            throw new Error();
+        }
+    } catch (err) {
+        return {
+            markup: status.components.validationMessage(
+                I18n.t('validation_title'),
+                I18n.t('validation_invalid_number')
+            )
+        };
+    }
+
+
 }
 
 function handleSend(params, context) {
