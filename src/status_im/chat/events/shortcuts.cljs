@@ -16,7 +16,7 @@
                  (send.events/set-and-validate-amount-db (:amount params))
                  (choose-recipient.events/fill-request-details (transaction-details contact))
                  (navigation/navigate-to :wallet-send-transaction))
-   :dispatch-n [:wallet/update-gas-price]})
+   :dispatch-n [[:wallet/update-gas-price]]})
 
 (def shortcuts
   {"send" send-shortcut-fx})
@@ -30,4 +30,4 @@
         shortcut-specific-fx (get shortcuts command)]
     (-> db
         (shortcut-specific-fx contact (:params content))
-        (update :dispatch-n conj :cleanup-chat-command))))
+        (update :dispatch-n conj [:cleanup-chat-command]))))

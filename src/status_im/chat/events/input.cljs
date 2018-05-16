@@ -394,7 +394,6 @@
                                     (assoc selected-command :args
                                            (get-in db [:chats current-chat-id :seq-arguments]))
                                     (update selected-command :args (partial remove string/blank?)))))]
-       (js/alert (command-complete? chat-command))
        (if (:command chat-command)
           ;; Returns true if current input contains command
          (if (command-complete? chat-command)
