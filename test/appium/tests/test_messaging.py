@@ -1,6 +1,5 @@
 import random
 import string
-import pytest
 import emoji
 
 from tests.base_test_case import MultipleDeviceTestCase
@@ -149,11 +148,8 @@ class TestMessages(MultipleDeviceTestCase):
         users = []
         chat_name = ''.join(random.choice(string.ascii_lowercase) for _ in range(7))
         for sign_in in device_1, device_2:
-            sign_in.create_user()
+            users.append(sign_in.create_user())
             home = sign_in.get_home_view()
-            profile = home.profile_button.click()
-            users.append(profile.username_text.text)
-            profile.home_button.click()
             home.join_public_chat(chat_name)
         chat_1, chat_2 = device_1.get_chat_view(), device_2.get_chat_view()
 
@@ -161,7 +157,7 @@ class TestMessages(MultipleDeviceTestCase):
         for message in messages_to_send_1:
             chat_1.chat_message_input.send_keys(message)
             chat_1.send_message_button.click()
-        chat_2.wait_for_messages(users[0], messages_to_send_1, self.errors)
+        chat_2.wait_for_messages_by_user(users[0], messages_to_send_1, self.errors)
 
         message_with_emoji = 'message with emoji'
         messages_to_send_2 = [emoji.emojize(emoji_name), emoji.emojize('%s %s' % (message_with_emoji, emoji_name_1))]
@@ -172,7 +168,7 @@ class TestMessages(MultipleDeviceTestCase):
         chat_2.chat_message_input.click()
         chat_2.send_as_keyevent(message_with_new_line)
         chat_2.send_message_button.click()
-        chat_1.wait_for_messages(users[1], messages_to_receive_2, self.errors)
+        chat_1.wait_for_messages_by_user(users[1], messages_to_receive_2, self.errors)
         for chat in chat_1, chat_2:
             chat.delete_chat(chat_name, self.errors)
         self.verify_no_errors()

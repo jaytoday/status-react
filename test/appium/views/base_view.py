@@ -87,11 +87,6 @@ class WalletButton(BaseButton):
         super(WalletButton, self).__init__(driver)
         self.locator = self.Locator.accessibility_id('wallet-tab-button')
 
-    def click(self):
-        from views.wallet_view import TransactionsButton
-        self.click_until_presence_of_element(desired_element=TransactionsButton(self.driver), attempts=3)
-        return self.navigate()
-
     def navigate(self):
         from views.wallet_view import WalletView
         return WalletView(self.driver)

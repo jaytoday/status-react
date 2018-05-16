@@ -1,7 +1,7 @@
 import time
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from tests import info
-from views.base_element import BaseButton, BaseEditBox, BaseText, BaseElement
+from views.base_element import BaseButton, BaseEditBox, BaseText
 from views.base_view import BaseView
 
 
@@ -103,7 +103,13 @@ class MessageByUsername(BaseText):
     def __init__(self, driver, username):
         super(MessageByUsername, self).__init__(driver)
         self.locator = self.Locator.xpath_selector(
-            '//*[@text="%s"]/following-sibling::android.widget.TextView' % username)
+            '//*[@text="%s"]/../../../../../*/preceding-sibling::*//*[@content-desc="chat-item"]/*[2]/*[1]' % username)
+
+    @property
+    def text(self):
+        text = self.text.rsplit(sep=' ', maxsplit=2)[0]
+        info('%s is %s' % (self.name, text))
+        return text
 
 
 class MoreUsersButton(BaseButton):
@@ -167,7 +173,6 @@ class ChatView(BaseView):
         self.faucet_command = FaucetCommand(self.driver)
         self.faucet_send_command = FaucetSendCommand(self.driver)
 
-
         self.chat_options = ChatMenuButton(self.driver)
         self.members_button = MembersButton(self.driver)
         self.delete_chat_button = DeleteChatButton(self.driver)
@@ -204,15 +209,29 @@ class ChatView(BaseView):
     def wait_for_messages_by_user(self, username: str, expected_messages: list, errors: list, wait_time: int = 30):
         expected_messages = expected_messages if type(expected_messages) == list else [expected_messages]
         repeat = 0
-        while repeat <= wait_time:
-            received_messages = [element.text for element in MessageByUsername(self.driver, username).find_elements()]
-            if not set(expected_messages) - set(received_messages):
-                break
+        while repeat <= wait_time and expected_messages:
+            try:
+                elements = MessageByUsername(self.driver, username).find_elements()
+                for element in elements:
+                    expected_messages.remove(element.text)
+            except (NoSuchElementException, ValueError):
+                pass
             time.sleep(3)
             repeat += 3
-        if set(expected_messages) - set(received_messages):
-            errors.append('Not received messages from user %s: "%s"' % (username, ', '.join(
-                [i for i in list(set(expected_messages) - set(received_messages))])))
+        if not expected_messages:
+            return
+        not_received_at_all = expected_messages.copy()
+        for message in not_received_at_all:
+            try:
+                self.find_full_text(message)
+                not_received_at_all.remove(message)
+            except TimeoutException:
+                pass
+        if not_received_at_all:
+            errors.append('Not received messages from user %s: "%s"' % (
+                username, ', '.join([i for i in not_received_at_all])))
+        errors.append('Messages "%s" were received but not from "%s" username' % (
+            ', '.join([i for i in set(expected_messages) - set(not_received_at_all)]), username))
 
     def wait_for_messages(self, username: str, expected_messages: list, errors: list, wait_time: int = 30):
         expected_messages = expected_messages if type(expected_messages) == list else [expected_messages]
