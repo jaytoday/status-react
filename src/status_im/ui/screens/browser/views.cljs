@@ -12,9 +12,9 @@
             [status-im.ui.components.react :as components]
             [reagent.core :as reagent]
             [status-im.ui.components.chat-icon.screen :as chat-icon.screen]
-            [status-im.ui.components.icons.vector-icons :as vector-icons]
             [status-im.i18n :as i18n]
-            [status-im.utils.ethereum.core :as ethereum]))
+            [status-im.utils.ethereum.core :as ethereum]
+            [status-im.ui.components.toolbar.actions :as actions]))
 
 (views/defview toolbar-content-dapp [contact-identity]
   (views/letsubs [contact [:get-contact-by-identity contact-identity]]
@@ -60,12 +60,6 @@
    [react/view styles/web-view-loading
     [components/activity-indicator {:animating true}]]))
 
-(defn on-navigation-change [event browser]
-  (let [{:strs [url canGoBack canGoForward]} (js->clj event)]
-    (when-not (= "about:blank" url)
-      (re-frame/dispatch [:update-browser (assoc browser :url url)]))
-    (re-frame/dispatch [:update-browser-options {:can-go-back? canGoBack :can-go-forward? canGoForward}])))
-
 (defn get-inject-js [url]
   (let [domain-name (nth (re-find #"^\w+://(www\.)?([^/:]+)" url) 2)]
     (get (:inject-js browser-config) domain-name)))
@@ -74,7 +68,6 @@
   (views/letsubs [webview (atom nil)
                   {:keys [address]} [:get-current-account]
                   {:keys [dapp? contact url] :as browser} [:get-current-browser]
-                  {:keys [can-go-back? can-go-forward?]} [:get :browser/options]
                   extra-js [:web-view-extra-js]
                   rpc-url [:get :rpc-url]
                   unread-messages-number [:get-chats-unread-messages-number]
@@ -82,7 +75,7 @@
     [react/keyboard-avoiding-view styles/browser
      [status-bar/status-bar]
      [toolbar.view/toolbar {}
-      (toolbar.view/nav-back-count)
+      [toolbar.view/nav-button-with-count actions/default-close]
       (if dapp?
         [toolbar-content-dapp contact unread-messages-number]
         [toolbar-content browser unread-messages-number])]
@@ -96,7 +89,6 @@
          :start-in-loading-state                true
          :render-error                          web-view-error
          :render-loading                        web-view-loading
-         :on-navigation-state-change            #(on-navigation-change % browser)
          :injected-on-start-loading-java-script (str js-res/web3
                                                      js-res/jquery
                                                      (get-inject-js url)
@@ -106,16 +98,4 @@
                                                       (str network-id)))
          :injected-java-script                  (str js-res/webview-js extra-js)}]
        [react/view styles/background
-        [react/text (i18n/label :t/enter-dapp-url)]])
-     [react/view styles/toolbar
-      [react/touchable-highlight {:on-press            #(.goBack @webview)
-                                  :disabled            (not can-go-back?)
-                                  :accessibility-label :previou-page-button}
-       [react/view (when (not can-go-back?) {:opacity 0.4})
-        [vector-icons/icon :icons/arrow-left]]]
-      [react/touchable-highlight {:on-press            #(.goForward @webview)
-                                  :disabled            (not can-go-forward?)
-                                  :style               styles/forward-button
-                                  :accessibility-label :next-page-button}
-       [react/view (when (not can-go-forward?) {:opacity 0.4})
-        [vector-icons/icon :icons/arrow-right]]]]]))
+        [react/text (i18n/label :t/enter-dapp-url)]])]))
