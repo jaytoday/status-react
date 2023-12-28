@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  * All rights reserved.
  *
  * This source code is licensed under the BSD-style license found in the
@@ -7,12 +7,10 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#import <RCTAppDelegate.h>
 #import <UIKit/UIKit.h>
+#import <UserNotifications/UNUserNotificationCenter.h>
 
-@import UserNotifications;
-
-@interface AppDelegate : UIResponder <UIApplicationDelegate,UNUserNotificationCenterDelegate>
-
-@property (nonatomic, strong) UIWindow *window;
+@interface AppDelegate : RCTAppDelegate <UIApplicationDelegate, UNUserNotificationCenterDelegate>
 
 @end
