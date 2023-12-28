@@ -1,5 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#4360df</color>
-    <color name="primary_dark">#5c6bc0</color>
-    <color name="accent">#5c6bc0</color>
+  <color name="alert_background">#ffffff</color>
+  <color name="alert_text">#000000</color>
+  <color name="splash_background">#09101C</color>
+  <color name="splash_status_bar_color">#ffffff</color>
 </resources>

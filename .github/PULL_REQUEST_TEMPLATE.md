@@ -7,22 +7,66 @@ If you submit PR for issue with bounty then write here Fixes #NN where NN is iss
 
 fixes #...
 
-### Summary:
+### Summary
 
 [comment]: # (Summarise the problem and how the pull request solves it)
 ...
 
-### Review notes (optional):
-<!-- (Specify if something in particular should be looked at, or ignored, during review) -->
+<!-- (Optional, remove if no changes to documentation) -->
+Documentation change PR (review please): https://github.com/status-im/status.im/pull/xxx
 
-### Testing notes (optional):
-<!-- (Specify if something specific has to be tested, for example upgrade paths) -->
+### Review notes
+<!-- (Optional. Specify if something in particular should be looked at, or ignored, during review) -->
 
-### Steps to test:
+### Testing notes
+<!-- (Optional) -->
+
+#### Platforms
+<!-- (Optional. Specify which platforms should be tested) -->
+
+- Android
+- iOS
+- macOS
+- Linux
+- Windows
+
+#### Areas that maybe impacted
+<!-- (Optional. Specify if some specific areas has to be tested, for example 1-1 chats) -->
+
+##### Functional
+
+- 1-1 chats
+- public chats
+- group chats
+- wallet / transactions
+- dapps / app browsing
+- account recovery
+- new account
+- user profile updates
+- networks
+- mailservers
+- fleet
+- bootnodes
+
+##### Non-functional
+
+- battery performance
+- CPU performance / speed of the app
+- network consumption
+
+### Steps to test
+<!-- (Specify exact steps to test if there are such) -->
+
 - Open Status
 - ...
 - Step 3, etc.
 
 <!-- (PRs will only be accepted if squashed into single commit.) -->
+
+### Before and after screenshots comparison
+
+| Figma (if available) | iOS (if available)    | Android (if available)
+| --- | --- | --- |
+| Please embed Image/Video here of the before and after.  | Please embed Image/Video here of the before and after.  | Please embed Image/Video here of the before and after. |
 
 status: ready <!-- Can be ready or wip -->

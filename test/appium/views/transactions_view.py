@@ -1,80 +1,108 @@
-import time
-
-import pytest
 from selenium.common.exceptions import NoSuchElementException
-
-from views.base_element import BaseElement, BaseButton, BaseText
+from views.base_element import BaseElement, Button, Text
 from views.base_view import BaseView
+
+
+class OptionsButton(Button):
+    def __init__(self, driver):
+        super().__init__(driver, xpath="(//android.widget.ImageView[@content-desc='icon'])[2]")
+
+    def click(self):
+        self.click_until_presence_of_element(OptionsButton.CopyTransactionHashButton(self.driver))
+
+    class CopyTransactionHashButton(Button):
+        def __init__(self, driver):
+            super().__init__(driver, translation_id="copy-transaction-hash")
+
+    class OpenOnEtherscanButton(Button):
+        def __init__(self, driver):
+            super().__init__(driver, translation_id="open-on-block-explorer")
 
 
 class TransactionTable(BaseElement):
     def __init__(self, driver):
-        super(TransactionTable, self).__init__(driver)
+        super().__init__(driver, xpath="//android.widget.ScrollView")
         self.driver = driver
-        self.locator = self.Locator.xpath_selector("//android.support.v4.view.ViewPager")
 
-    class TransactionElement(BaseButton):
-        def __init__(self, driver, amount):
-            super(TransactionTable.TransactionElement, self).__init__(driver)
-            self.driver = driver
-            self.locator = self.Locator.xpath_selector(
-                "(//android.widget.TextView[contains(@text,'%s ETH')])" % amount)
+    class TransactionElement(Button):
+        def __init__(self, driver):
+            super().__init__(driver)
+
+        @staticmethod
+        def by_amount(driver, amount: str, asset):
+            element = TransactionTable.TransactionElement(driver)
+            element.locator = "(//android.widget.TextView[contains(@text,'%s %s')])" % (amount, asset)
+            return element
+
+        @staticmethod
+        def by_index(driver, index: int):
+            element = TransactionTable.TransactionElement(driver)
+            element.locator = '(//android.view.ViewGroup[@content-desc="transaction-item"])[%d]' % (index + 1)
+            return element
 
         class TransactionDetailsView(BaseView):
             def __init__(self, driver):
                 super(TransactionTable.TransactionElement.TransactionDetailsView, self).__init__(driver)
                 self.driver = driver
-                self.locators = dict(transaction_hash="//android.widget.TextView[@text='Hash']/following-sibling::*[1]")
+                self.locators = dict()
+                self.options_button = OptionsButton(driver)
+                self.copy_transaction_hash_button = OptionsButton.CopyTransactionHashButton(driver)
+                self.open_transaction_on_etherscan_button = OptionsButton.OpenOnEtherscanButton(driver)
 
-            class DetailsTextElement(BaseText):
+                self.locators['transaction_hash'] = "//android.widget.TextView[@text='Hash']/following-sibling::*[1]"
+                self.locators['sender_address'] = "//*[@content-desc='sender-address-text']"
+                self.locators['recipient_address'] = "//*[@content-desc='recipient-address-text'][last()]"
+
+            class DetailsTextElement(Text):
                 def __init__(self, driver, locator):
                     super(TransactionTable.TransactionElement.TransactionDetailsView.DetailsTextElement,
                           self).__init__(driver)
-                    self.locator = self.Locator.xpath_selector(locator)
+                    self.locator = locator
+
+                def text(self):
+                    text = self.find_element().text
+                    self.driver.info('%s is %s' % (self.name, text))
+                    return text
 
             def get_transaction_hash(self) -> str:
-                return self.DetailsTextElement(driver=self.driver, locator=self.locators['transaction_hash']).text
+                return self.DetailsTextElement(driver=self.driver, locator=self.locators['transaction_hash']).text()
+
+            def get_sender_address(self) -> str:
+                return self.DetailsTextElement(driver=self.driver, locator=self.locators['sender_address']).text()
+
+            def get_recipient_address(self) -> str:
+                return self.DetailsTextElement(driver=self.driver, locator=self.locators['recipient_address']).text()
 
         def navigate(self):
             return self.TransactionDetailsView(self.driver)
 
-    def get_transaction_element(self, amount: str):
-        return self.TransactionElement(self.driver, amount=amount)
+    def transaction_by_index(self, index: int):
+        self.driver.info('Finding transaction by index %s' % index)
+        return self.TransactionElement.by_index(self.driver, index=index)
 
-    def find_transaction(self, amount: str) -> TransactionElement:
+    def transaction_by_amount(self, amount: str, asset):
+        self.driver.info('Finding transaction by amount %s' % amount)
+        return self.TransactionElement.by_amount(self.driver, amount=amount.replace(',', '.'), asset=asset)
+
+    def find_transaction(self, amount: str, asset='ETH') -> TransactionElement:
+        element = self.transaction_by_amount(amount=amount, asset=asset)
         for i in range(9):
             try:
-                element = self.get_transaction_element(amount=amount.replace(',', '.'))
                 element.find_element()
                 return element
             except NoSuchElementException:
-                time.sleep(5)
-                self.driver.swipe(500, 500, 500, 1000)
-        pytest.fail('Transaction was not found on Wallet/Transaction screen')
+                from views.base_view import BaseView
+                BaseView(self.driver).pull_to_refresh()
+                element.scroll_to_element()
+        self.driver.fail('Transaction %s %s was not found on Wallet/Transaction screen' % (amount, asset))
 
-
-class HistoryTab(BaseButton):
-    def __init__(self, driver):
-        super(HistoryTab, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('history-button')
-
-
-class UnsignedTab(BaseButton):
-    def __init__(self, driver):
-        super(UnsignedTab, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('unsigned-transactions-button')
-
-    class SignButton(BaseButton):
-        def __init__(self, driver):
-            super(UnsignedTab.SignButton, self).__init__(driver)
-            self.locator = self.Locator.accessibility_id('sign-button')
+    def get_transactions_number(self):
+        element = self.TransactionElement(self.driver)
+        element.locator = '//android.view.ViewGroup[@content-desc="transaction-item"]'
+        return len(element.wait_for_elements())
 
 
 class TransactionsView(BaseView):
     def __init__(self, driver):
-        super(TransactionsView, self).__init__(driver)
-        self.driver = driver
-        self.history_tab = HistoryTab(self.driver)
-        self.unsigned_tab = UnsignedTab(self.driver)
-        self.sign_button = UnsignedTab.SignButton(self.driver)
+        super().__init__(driver)
         self.transactions_table = TransactionTable(self.driver)

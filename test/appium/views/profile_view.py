@@ -1,190 +1,91 @@
 import time
-from tests import info
+
+from selenium.common import NoSuchElementException
+
+from tests import common_password
 from tests.base_test_case import AbstractTestCase
-from views.base_element import BaseText, BaseButton, BaseEditBox, BaseElement
+from views.base_element import Text, Button, EditBox, SilentButton
 from views.base_view import BaseView
 
 
-class PublicKeyText(BaseText):
-
+class OptionsButton(Button):
     def __init__(self, driver):
-        super(PublicKeyText, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('address-text')
-
-    @property
-    def text(self):
-        text = self.scroll_to_element().text
-        info('%s is %s' % (self.name, text))
-        return text
+        super().__init__(driver, xpath="(//android.view.ViewGroup[@content-desc='icon'])[2]")
 
 
-class ProfileAddressText(BaseText):
-
+class AddNewContactButton(Button):
     def __init__(self, driver):
-        super(ProfileAddressText, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('profile-address')
+        super().__init__(driver, accessibility_id="add-new-contact-button")
+
+    def navigate(self):
+        from views.chat_view import ChatView
+        return ChatView(self.driver)
 
 
-class OptionsButton(BaseButton):
-
+class LogoutButton(SilentButton):
     def __init__(self, driver):
-        super(OptionsButton, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector(
-            '(//android.view.ViewGroup[@content-desc="icon"])[2]')
+        super().__init__(driver, translation_id="logout")
+        # super().__init__(driver, accessibility_id="log-out-button")
 
-    class UserStatusBox(BaseButton):
-
-        def __init__(self, driver):
-            super(OptionsButton.UserStatusBox, self).__init__(driver)
-            self.locator = self.Locator.xpath_selector('(//android.widget.ScrollView)[2]//android.widget.TextView')
-
-    class UsernameInput(BaseEditBox):
-
-        def __init__(self, driver):
-            super(OptionsButton.UsernameInput, self).__init__(driver)
-            self.locator = self.Locator.accessibility_id('username-input')
-
-    class UserStatusInput(BaseEditBox):
-
-        def __init__(self, driver):
-            super(OptionsButton.UserStatusInput, self).__init__(driver)
-            self.locator = self.Locator.xpath_selector('(//android.widget.EditText)[2]')
-
-
-class NetworkSettingsButton(BaseButton):
-
-    def __init__(self, driver):
-        super(NetworkSettingsButton, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('network-button')
-
-    class NetworkButton(BaseButton):
-        def __init__(self, driver, network):
-            super(NetworkSettingsButton.NetworkButton, self).__init__(driver)
-            self.locator = self.Locator.xpath_selector('//*[@text="' + network + '"]')
-
-    class ConnectButton(BaseButton):
-
-        def __init__(self, driver):
-            super(NetworkSettingsButton.ConnectButton, self).__init__(driver)
-            self.locator = self.Locator.accessibility_id('network-connect-button')
-
-
-class LogoutButton(BaseButton):
-
-    def __init__(self, driver):
-        super(LogoutButton, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('log-out-button')
+    def click(self):
+        self.scroll_to_element().click()
+        return self.navigate()
 
 
 class LogoutDialog(BaseView):
     def __init__(self, driver):
-        super(LogoutDialog, self).__init__(driver)
+        super().__init__(driver)
         self.logout_button = LogoutDialog.LogoutButton(driver)
 
-    class LogoutButton(BaseButton):
+    class LogoutButton(SilentButton):
         def __init__(self, driver):
-            super(LogoutDialog.LogoutButton, self).__init__(driver)
-            self.locator = self.Locator.text_selector('LOG OUT')
+            super().__init__(driver, translation_id="logout", uppercase=True)
 
         def navigate(self):
             from views.sign_in_view import SignInView
             return SignInView(self.driver)
 
 
-class ConfirmLogoutButton(BaseButton):
-
+class ENSusernames(Button):
     def __init__(self, driver):
-        super(ConfirmLogoutButton, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector("//*[@text='LOG OUT']")
+        super().__init__(driver, translation_id="ens-usernames")
 
-
-class UserNameText(BaseText):
-    def __init__(self, driver):
-        super(UserNameText, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector(
-            '//android.widget.ImageView[@content-desc="chat-icon"]/../android.widget.TextView')
-
-
-class ShareMyContactKeyButton(BaseButton):
-
-    def __init__(self, driver):
-        super(ShareMyContactKeyButton, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('share-my-contact-code-button')
-
-
-class EditButton(BaseButton):
-
-    def __init__(self, driver):
-        super(EditButton, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('edit-button')
-
-
-class ProfilePictureElement(BaseElement):
-    def __init__(self, driver):
-        super(ProfilePictureElement, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('chat-icon')
-
-
-class EditPictureButton(BaseButton):
-
-    def __init__(self, driver):
-        super(EditPictureButton, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('edit-profile-photo-button')
-
-
-class ConfirmButton(BaseButton):
-
-    def __init__(self, driver):
-        super(ConfirmButton, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('done-button')
-
-
-class CrossIcon(BaseButton):
-
-    def __init__(self, driver):
-        super(CrossIcon, self).__init__(driver)
-        self.locator = self.Locator.accessibility_id('done-button')
-
-
-class AdvancedButton(BaseButton):
-
-    def __init__(self, driver):
-        super(AdvancedButton, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector('//*[@text="Advanced"]')
+    def navigate(self):
+        from views.dapps_view import DappsView
+        return DappsView(self.driver)
 
     def click(self):
         self.scroll_to_element().click()
-        info('Tap on %s' % self.name)
         return self.navigate()
 
 
-class BackupSeedPhraseButton(BaseButton):
-
+class AdvancedButton(Button):
     def __init__(self, driver):
-        super(BackupSeedPhraseButton, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector("//*[@text='Backup your Seed Phrase']")
+        super().__init__(driver, accessibility_id="advanced-button")
+
+    def click(self):
+        self.scroll_to_element().click()
+        return self.navigate()
 
 
-class OkContinueButton(BaseButton):
-
+class BackupRecoveryPhraseButton(Button):
     def __init__(self, driver):
-        super(OkContinueButton, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector("//*[@text='OK, CONTINUE']")
+        super().__init__(driver, accessibility_id="back-up-recovery-phrase-button")
+
+    def click(self):
+        self.scroll_to_element().click()
+        return self.navigate()
 
 
-class SeedPhraseTable(BaseText):
-
+class RecoveryPhraseTable(Text):
     def __init__(self, driver):
-        super(SeedPhraseTable, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector(
-            '//android.widget.FrameLayout/android.view.ViewGroup[3]/android.widget.TextView')
+        super().__init__(driver, translation_id="your-recovery-phrase",
+                         suffix="/following-sibling::android.view.ViewGroup[1]/android.widget.TextView")
 
 
-class SeedPhraseWordNumberText(BaseText):
-
+class RecoveryPhraseWordNumberText(Text):
     def __init__(self, driver):
-        super(SeedPhraseWordNumberText, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector("//*[contains(@text,'#')]")
+        super().__init__(driver, xpath="//*[contains(@text,'#')]")
 
     @property
     def number(self):
@@ -192,110 +93,453 @@ class SeedPhraseWordNumberText(BaseText):
         return int(self.find_element().text.split('#')[1])
 
 
-class SeedPhraseWordInput(BaseEditBox):
-
+class RecoveryPhraseWordInput(EditBox):
     def __init__(self, driver):
-        super(SeedPhraseWordInput, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector('//android.widget.EditText')
+        super(RecoveryPhraseWordInput, self).__init__(driver, xpath="//android.widget.EditText")
 
 
-class OkGotItButton(BaseButton):
-
+class HelpButton(Button):
     def __init__(self, driver):
-        super(OkGotItButton, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector("//*[@text='OK, GOT IT']")
-
-
-class DebugModeToggle(BaseButton):
-
-    def __init__(self, driver):
-        super(DebugModeToggle, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector("//android.widget.Switch")
+        super().__init__(driver, accessibility_id="help-button")
 
     def click(self):
-        self.scroll_to_element()
-        super(DebugModeToggle, self).click()
+        self.scroll_to_element().click()
 
 
-class SelectFromGalleryButton(BaseButton):
-
+class FaqButton(Button):
     def __init__(self, driver):
-        super(SelectFromGalleryButton, self).__init__(driver)
-        self.locator = self.Locator.xpath_selector("//*[@text='Select from gallery']")
+        super().__init__(driver, accessibility_id="faq-button")
+
+    def navigate(self):
+        from views.web_views.base_web_view import BaseWebView
+        return BaseWebView(self.driver)
+
+
+class MailServerElement(Button):
+    def __init__(self, driver, server_name):
+        super().__init__(driver, xpath="//*[@content-desc='mailserver-item']//*[@text='%s']" % server_name)
+        self.server_name = server_name
+
+    def click(self):
+        size = self.driver.get_window_size()
+        self.driver.swipe(500, size["height"] * 0.8, 500, size["height"] * 0.05)
+        self.find_element().click()
+
+
+class AboutButton(Button):
+    def __init__(self, driver):
+        super().__init__(driver, accessibility_id="about-button")
+
+    def click(self):
+        self.scroll_to_element().click()
+        return self.navigate()
+
+
+class SyncSettingsButton(Button):
+    def __init__(self, driver):
+        super().__init__(driver, accessibility_id="sync-settings-button")
+
+    def click(self):
+        self.scroll_to_element().click()
+
+
+class DappPermissionsButton(Button):
+    def __init__(self, driver):
+        super().__init__(driver, accessibility_id="dapps-permissions-button")
+
+    def click(self):
+        self.scroll_to_element().click()
+
+
+class PrivacyPolicyButton(Button):
+    def __init__(self, driver):
+        super().__init__(driver, accessibility_id="privacy-policy")
+
+    def navigate(self):
+        from views.web_views.base_web_view import BaseWebView
+        return BaseWebView(self.driver)
+
+
+class TermsOfUseButton(Button):
+    def __init__(self, driver):
+        super().__init__(driver, accessibility_id="terms-of-service")
+
+    def navigate(self):
+        from views.web_views.base_web_view import BaseWebView
+        return BaseWebView(self.driver)
+
+
+class ProfilePictureElement(Button):
+    def __init__(self, driver):
+        super().__init__(driver, accessibility_id="chat-icon")
+
+
+class KeycardButton(Button):
+
+    def navigate(self):
+        from views.keycard_view import KeycardView
+        return KeycardView(self.driver)
+
+    def click(self):
+        self.scroll_to_element().click()
+        return self.navigate()
 
 
 class ProfileView(BaseView):
 
     def __init__(self, driver):
-        super(ProfileView, self).__init__(driver)
-        self.driver = driver
-
-        # old design
+        super().__init__(driver)
         self.options_button = OptionsButton(self.driver)
-        self.username_input = OptionsButton.UsernameInput(self.driver)
-        self.user_status_box = OptionsButton.UserStatusBox(self.driver)
-        self.user_status_input = OptionsButton.UserStatusInput(self.driver)
-        self.public_key_text = PublicKeyText(self.driver)
-        self.profile_address_text = ProfileAddressText(self.driver)
 
-        self.network_settings_button = NetworkSettingsButton(self.driver)
-        self.connect_button = NetworkSettingsButton.ConnectButton(self.driver)
+        # Header
+        self.public_key_text = Text(self.driver, accessibility_id="chat-key")
+        self.default_username_text = Text(self.driver, accessibility_id="default-username")
+        self.share_my_profile_button = Button(self.driver, accessibility_id="share-header-button")
+        self.profile_picture = ProfilePictureElement(self.driver)
+        self.online_indicator = Button(self.driver, accessibility_id="online-profile-photo-dot")
+        self.edit_picture_button = Button(self.driver, accessibility_id="edit-profile-photo-button")
+        self.confirm_edit_button = Button(self.driver, accessibility_id="done-button")
+        self.select_from_gallery_button = Button(self.driver, translation_id="profile-pic-pick")
+        self.capture_button = Button(self.driver, translation_id="image-source-make-photo")
+        self.take_photo_button = Button(self.driver, accessibility_id="take-photo")
+        self.crop_photo_button = Button(self.driver, accessibility_id="Crop")
+        self.decline_photo_crop = Button(self.driver, accessibility_id="Navigate up")
+        self.shutter_button = Button(self.driver, accessibility_id="Shutter")
+        self.accept_photo_button = Button(self.driver, accessibility_id="Done")
+
+        # ENS
+        self.username_in_ens_chat_settings_text = EditBox(
+            self.driver, xpath="//*[@content-desc='chat-icon']/../../android.widget.TextView[2]")
+        self.ens_usernames_button = ENSusernames(self.driver)
+        self.ens_name_in_share_chat_key_text = Text(self.driver, accessibility_id="ens-username")
+
+        # Contacts
+        self.contacts_button = Button(self.driver, accessibility_id="contacts-button")
+        self.blocked_users_button = Button(self.driver, accessibility_id="blocked-users-list-button")
+        self.add_new_contact_button = AddNewContactButton(self.driver)
+        self.invite_friends_in_contact_button = Button(self.driver, accessibility_id="invite-friends-button")
+
+        # Privacy and security
+        self.privacy_and_security_button = Button(self.driver, accessibility_id="privacy-and-security-settings-button")
+        self.accept_new_chats_from = Button(self.driver, accessibility_id="accept-new-chats-from")
+        self.accept_new_chats_from_contacts_only = Button(self.driver, translation_id="contacts")
+        self.reset_password_button = Button(self.driver, accessibility_id="reset-password")
+        self.current_password_edit_box = EditBox(self.driver, accessibility_id="current-password")
+        self.new_password_edit_box = EditBox(self.driver, accessibility_id="new-password")
+        self.confirm_new_password_edit_box = EditBox(self.driver, accessibility_id="confirm-new-password")
+        self.current_password_wrong_text = Text(self.driver, accessibility_id="current-password-error")
+
+        # Appearance
+        self.appearance_button = Button(self.driver, accessibility_id="appearance-settings-button")
+        self.show_profile_pictures_of = Button(self.driver, accessibility_id="show-profile-pictures")
+        self.show_profile_pictures_to = Button(self.driver, accessibility_id="show-profile-pictures-to")
+        ## Backup recovery phrase
+        self.backup_recovery_phrase_button = BackupRecoveryPhraseButton(self.driver)
+        self.recovery_phrase_table = RecoveryPhraseTable(self.driver)
+        self.recovery_phrase_word_number = RecoveryPhraseWordNumberText(self.driver)
+        self.recovery_phrase_word_input = RecoveryPhraseWordInput(self.driver)
+        ## Dapps permissions
+        self.dapp_permissions_button = DappPermissionsButton(self.driver)
+        self.revoke_access_button = Button(self.driver, translation_id="revoke-access")
+        ## Delete my profile
+        self.delete_my_profile_button = Button(self.driver, translation_id="delete-my-profile")
+        self.delete_my_profile_password_input = EditBox(self.driver, xpath="//android.widget.EditText")
+        self.delete_profile_button = Button(self.driver, accessibility_id="delete-profile-confirm")
+
+        # Notifications
+        self.profile_notifications_button = Button(self.driver, accessibility_id="notifications-settings-button")
+        self.profile_notifications_toggle_button = Button(self.driver,
+                                                          accessibility_id="local-notifications-settings-button")
+        self.push_notification_toggle = Button(
+            self.driver, xpath="//*[@content-desc='notifications-button']//*[@content-desc='switch']")
+        self.wallet_push_notifications = Button(self.driver, accessibility_id="notifications-button")
+
+        # Sync settings
+        self.sync_settings_button = SyncSettingsButton(self.driver)
+        ## Mobile Data
+        self.use_mobile_data = Button(self.driver, translation_id="mobile-network-use-mobile",
+                                      suffix="/following-sibling::android.widget.Switch[1]")
+        self.ask_me_when_on_mobile_network = Button(self.driver, translation_id="mobile-network-ask-me",
+                                                    suffix="/following-sibling::android.widget.Switch[1]")
+        ## Backup settings
+        self.backup_settings_button = Button(self.driver, accessibility_id="backup-settings-button")
+        ## Perform backup
+        self.perform_backup_button = Button(self.driver, translation_id="perform-backup")
+
+        ## Sync history data
+        self.sync_history_for_button = Button(self.driver, accessibility_id="default-sync-period-button")
+        ## History nodes
+        self.mail_server_button = Button(self.driver, accessibility_id="offline-messages-settings-button")
+        self.mail_server_address_input = EditBox(self.driver, translation_id="mailserver-address",
+                                                 suffix="/following-sibling::*[1]/android.widget.EditText")
+        self.mail_server_connect_button = Button(self.driver, accessibility_id="mailserver-connect-button")
+        self.mail_server_auto_selection_button = Button(self.driver, translation_id="mailserver-automatic",
+                                                        suffix="/following-sibling::*[1]")
+        self.use_history_node_button = Button(self.driver, translation_id="offline-messaging-use-history-nodes",
+                                              suffix="/following-sibling::*[1]")
+        self.mail_server_delete_button = Button(self.driver, accessibility_id="mailserver-delete-button")
+        self.mail_server_confirm_delete_button = Button(self.driver,
+                                                        xpath='//*[@text="%s"]' % self.get_translation_by_key(
+                                                            "delete-mailserver").upper())
+        ## Device syncing
+        self.devices_button = Button(self.driver, accessibility_id="pairing-settings-button")
+        self.device_name_input = EditBox(self.driver, accessibility_id="device-name")
+        self.go_to_pairing_settings_button = Button(self.driver, translation_id="pairing-go-to-installation",
+                                                    uppercase=True)
+        self.advertise_device_button = Button(self.driver, accessibility_id="advertise-device")
+        self.sync_all_button = Button(self.driver, translation_id="sync-all-devices")
+        self.syncing_button = Button(self.driver, accessibility_id="icon, Syncing, label-component, icon")
+        self.sync_plus_button = Button(self.driver,
+                                       xpath="//*[@text='Syncing']/following-sibling::android.view.ViewGroup[1]")
+        self.slide_button_track = Button(self.driver, xpath="//*[@resource-id='slide-button-track']")
+
+        # Keycard
+        self.keycard_button = Button(self.driver, accessibility_id="keycard-button")
+        self.change_pin_button = KeycardButton(self.driver, translation_id="change-pin")
+        self.change_puk_button = KeycardButton(self.driver, translation_id="change-puk")
+        self.change_pairing_code_button = KeycardButton(self.driver, translation_id="change-pairing")
+        self.create_keycard_backup_button = KeycardButton(self.driver, translation_id="keycard-backup")
+
+        # Advanced
+        self.advanced_button = AdvancedButton(self.driver)
+        self.mutual_contact_request_switcher = Button(self.driver, accessibility_id="mutual-contact-requests-switch")
+        ## Network
+        self.network_settings_button = Button(self.driver, accessibility_id="network-button")
+        self.active_network_name = Text(self.driver,
+                                        xpath="//android.widget.TextView[contains(@text,'with upstream RPC')]")
+        self.plus_button = Button(self.driver, xpath="(//android.widget.ImageView[@content-desc='icon'])[2]")
+        self.custom_chain_button = Button(self.driver, translation_id="custom")
+        self.custom_network_url_input = EditBox(self.driver, translation_id="rpc-url",
+                                                suffix="/following-sibling::*[1]/android.widget.EditText")
+        self.custom_network_symbol_input = EditBox(self.driver, translation_id="specify-symbol")
+        self.specify_name_input = EditBox(self.driver, translation_id="name",
+                                          suffix="/following-sibling::*[1]/android.widget.EditText")
+        self.specify_network_id_input = EditBox(self.driver, translation_id="specify-network-id")
+        self.connect_button = Button(self.driver, accessibility_id="network-connect-button")
+        ## Toggles
+        self.transaction_management_enabled_toggle = Button(self.driver,
+                                                            accessibility_id="transactions-management-enabled")
+        self.webview_debug_toggle = Button(self.driver, accessibility_id="webview-debug-switch")
+        self.waku_bloom_toggle = Button(self.driver, accessibility_id="waku-bloom-filter-mode-settings-switch")
+        ## Log level
+        self.log_level_setting_button = Button(self.driver, accessibility_id="log-level-settings-button")
+        ## Fleet
+        self.fleet_setting_button = Button(self.driver, accessibility_id="fleet-settings-button")
+        ## Bootnodes
+        self.bootnodes_button = Button(self.driver, accessibility_id="bootnodes-settings-button")
+        self.bootnode_address_input = EditBox(self.driver, accessibility_id="bootnode-address")
+        self.enable_bootnodes = Button(self.driver, xpath="//android.widget.Switch")
+        self.add_bootnode_button = Button(self.driver, accessibility_id="add-bootnode")
+
+        # Need help
+        self.help_button = HelpButton(self.driver)
+        self.submit_bug_button = Button(self.driver, accessibility_id="submit-bug-button")
+        self.bug_description_edit_box = EditBox(self.driver, accessibility_id="bug-report-description")
+        self.bug_steps_edit_box = EditBox(self.driver, accessibility_id="bug-report-steps")
+        self.bug_submit_button = Button(self.driver, accessibility_id="bug-report-submit")
+        self.request_a_feature_button = Button(self.driver, accessibility_id="request-a-feature-button")
+        self.faq_button = FaqButton(self.driver)
+
+        # About
+        self.about_button = AboutButton(self.driver)
+        self.privacy_policy_button = PrivacyPolicyButton(self.driver)
+        self.terms_of_use_button = TermsOfUseButton(self.driver)
+        self.app_version_text = Text(self.driver, xpath="//*[@content-desc='app-version']//android.widget.TextView[2]")
+        self.node_version_text = Text(self.driver,
+                                      xpath="//*[@content-desc='node-version']//android.widget.TextView[2]")
+
+
+        # Logout
         self.logout_button = LogoutButton(self.driver)
         self.logout_dialog = LogoutDialog(self.driver)
-        self.confirm_logout_button = ConfirmLogoutButton(self.driver)
+        self.confirm_logout_button = Button(self.driver, translation_id="logout", uppercase=True)
 
-        # new design
+        # New profile
+        self.profile_password_button = Button(self.driver, accessibility_id="icon, Password, label-component, icon")
+        self.profile_legacy_button = Button(self.driver, accessibility_id="icon, Legacy settings, label-component, icon")
 
-        self.username_text = UserNameText(self.driver)
-        self.share_my_contact_key_button = ShareMyContactKeyButton(self.driver)
-        self.edit_button = EditButton(self.driver)
-        self.profile_picture = ProfilePictureElement(self.driver)
-        self.edit_picture_button = EditPictureButton(self.driver)
-        self.confirm_button = ConfirmButton(self.driver)
-        self.cross_icon = CrossIcon(self.driver)
-        self.advanced_button = AdvancedButton(self.driver)
-        self.debug_mode_toggle = DebugModeToggle(self.driver)
+    def switch_network(self, network='Mainnet with upstream RPC'):
+        self.driver.info("## Switch network to '%s'" % network, device=False)
+        self.advanced_button.click()
+        self.network_settings_button.click()
+        network_button = Button(self.driver, xpath="//*[@text='%s']" % network)
+        network_button.scroll_and_click()
+        self.connect_button.click_until_presence_of_element(self.confirm_button)
+        self.confirm_button.click_until_absense_of_element(self.confirm_button)
+        from views.sign_in_view import SignInView
+        SignInView(self.driver).sign_in()
+        self.driver.info("## Network is switched successfully!", device=False)
 
-        # Backup seed phrase
-        self.backup_seed_phrase_button = BackupSeedPhraseButton(self.driver)
-        self.ok_continue_button = OkContinueButton(self.driver)
-        self.seed_phrase_table = SeedPhraseTable(self.driver)
-        self.seed_phrase_word_number = SeedPhraseWordNumberText(self.driver)
-        self.seed_phrase_word_input = SeedPhraseWordInput(self.driver)
-        self.ok_got_it_button = OkGotItButton(self.driver)
-        self.select_from_gallery_button = SelectFromGalleryButton(self.driver)
+    def open_contact_from_profile(self, username):
+        self.driver.info("Opening profile of '%s' via Contacts" % username)
+        self.contacts_button.wait_and_click(30)
+        self.element_by_text(username).click()
+        from views.chat_view import ChatView
+        return ChatView(self.driver)
 
-    def switch_network(self, network):
+    def add_contact_via_contacts_list(self, public_key):
+        self.driver.info("Adding user to Contacts via Profile > Contacts")
+        self.contacts_button.wait_and_click(30)
+        self.add_new_contact_button.wait_and_click()
+        chat = self.get_chat_view()
+        chat.public_key_edit_box.click()
+        chat.public_key_edit_box.send_keys(public_key)
+        chat.view_profile_new_contact_button.click_until_presence_of_element(chat.profile_add_to_contacts_button)
+        chat.profile_add_to_contacts_button.click()
+        self.navigate_back_to_home_view()
+
+    def switch_push_notifications(self):
+        self.driver.info("Enabling push notifications via Profile")
+        self.profile_notifications_button.scroll_and_click()
+        self.profile_notifications_toggle_button.click()
+        self.navigate_back_to_home_view()
+
+    def add_custom_network(self, rpc_url: str, name: str, symbol: str, netwrok_id: str):
+        self.driver.info("## Add custom network", device=False)
+        self.advanced_button.click()
         self.network_settings_button.scroll_to_element()
         self.network_settings_button.click()
-        network_button = NetworkSettingsButton.NetworkButton(self.driver, network)
-        network_button.click()
+        self.plus_button.click_until_presence_of_element(self.custom_chain_button)
+        self.custom_network_url_input.send_keys(rpc_url)
+        self.specify_name_input.send_keys(name)
+        self.custom_network_symbol_input.send_keys(symbol)
+        self.custom_chain_button.scroll_and_click()
+        self.specify_network_id_input.scroll_to_element()
+        self.specify_network_id_input.send_keys(netwrok_id)
+        self.save_button.click()
+        self.element_by_text_part(name).scroll_to_element()
+        self.element_by_text_part(name).click_until_presence_of_element(self.connect_button)
         self.connect_button.click()
-        from views.sign_in_view import SignInView
-        return SignInView(self.driver)
+        self.confirm_button.click()
+        self.driver.info("## Custom network is added succesfully!", device=False)
+        return self.get_sign_in_view()
 
-    def get_address(self):
-        profile_view = self.profile_button.click()
-        return profile_view.profile_address_text.text
-
-    def get_seed_phrase(self):
-        text = [i.text for i in self.seed_phrase_table.find_elements()]
+    def get_recovery_phrase(self):
+        text = [i.text for i in self.recovery_phrase_table.find_elements()]
         return dict(zip(map(int, text[::2]), text[1::2]))
 
-    def edit_profile_picture(self, file_name: str):
-        if AbstractTestCase().environment == 'sauce':
-            self.profile_picture.template = file_name
-            self.edit_button.click()
-            self.edit_picture_button.click()
-            self.select_from_gallery_button.click()
-            if self.allow_button.is_element_displayed(sec=10):
-                self.allow_button.click()
-            self.element_by_text(file_name).click()
-            self.confirm_button.click()
-        else:
+    def backup_recovery_phrase(self):
+        self.driver.info("## Back up seed phrase", device=False)
+        self.ok_continue_button.click()
+        recovery_phrase = self.get_recovery_phrase()
+        self.next_button.click()
+        word_number = self.recovery_phrase_word_number.number
+        self.recovery_phrase_word_input.send_keys(recovery_phrase[word_number])
+        self.next_button.click()
+        word_number_1 = self.recovery_phrase_word_number.number
+        self.recovery_phrase_word_input.send_keys(recovery_phrase[word_number_1])
+        self.done_button.click()
+        self.yes_button.click()
+        self.ok_got_it_button.click()
+        self.driver.info("## Seed phrase is backed up!", device=False)
+        return recovery_phrase
+
+    def edit_profile_picture(self, image_index: int, update_by="Gallery"):
+        self.driver.info("## Setting custom profile image", device=False)
+        if not AbstractTestCase().environment == 'sauce':
             raise NotImplementedError('Test case is implemented to run on SauceLabs only')
+        ## pointing to legacy profile until new feature is implemented
+        self.profile_legacy_button.scroll_and_click()
+        self.profile_picture.click()
+        if update_by == "Gallery":
+            self.select_from_gallery_button.click()
+            self.select_photo_from_gallery_by_index(image_index)
+        else:
+            ## take by Photo
+            self.take_photo()
+            self.click_system_back_button()
+            self.profile_picture.click()
+            self.take_photo()
+            self.accept_photo_button.click()
+        self.crop_photo_button.click()
+        self.driver.info("## Custom profile image has been set", device=False)
+
+    def take_photo(self):
+        self.take_photo_button.click()
+        if self.allow_button.is_element_displayed(sec=5):
+            self.allow_button.click()
+        if self.allow_all_the_time.is_element_displayed(sec=5):
+            self.allow_all_the_time.click()
+        if self.element_by_text("NEXT").is_element_displayed(sec=5):
+            self.element_by_text("NEXT").click()
+        self.shutter_button.click()
+
+    def select_photo_from_gallery_by_index(self, image_index: int):
+        self.allow_button.click_if_shown()
+        self.allow_all_button.click_if_shown()
+        image_element = Button(self.driver, class_name="androidx.cardview.widget.CardView")
+        try:
+            image_element.find_elements()[image_index].click()
+        except IndexError:
+            raise NoSuchElementException("Image with index %s was not found" % image_index) from None
 
     def logout(self):
+        self.driver.info("Logging out")
         self.logout_button.click()
-        return self.logout_dialog.logout_button.click()
+        self.logout_dialog.logout_button.click()
+        self.logout_button.wait_for_invisibility_of_element(30)
 
+    def mail_server_by_name(self, server_name):
+        return MailServerElement(self.driver, server_name)
+
+    def get_toggle_device_by_name(self, device_name):
+        self.driver.info("Selecting device '%s' for sync" % device_name)
+        return SilentButton(
+            self.driver,
+            xpath="//android.widget.TextView[contains(@text,'%s')]/..//android.widget.CheckBox" % device_name)
+
+    def discover_and_advertise_device(self, device_name):
+        self.driver.info("Discovering and advertising '%s'" % device_name)
+        self.sync_settings_button.click()
+        self.devices_button.scroll_to_element()
+        self.devices_button.click()
+        self.device_name_input.send_keys(device_name)
+        self.continue_button.click_until_presence_of_element(self.advertise_device_button, 2)
+        self.advertise_device_button.click()
+
+    def retry_to_connect_to_mailserver(self):
+        self.driver.info("Retrying to connect to mailserver 5 times")
+        i = 0
+        while self.element_by_translation_id("mailserver-error-title").is_element_displayed(20) and i < 5:
+            self.element_by_translation_id("mailserver-retry", uppercase=True).click()
+            i += 1
+            self.just_fyi("retrying to connect: %s attempt" % i)
+            time.sleep(10)
+        if i == 5:
+            self.driver.fail("Failed to connect after %s attempts" % i)
+
+    def connect_existing_ens(self, name, is_stateofus=False):
+        self.driver.info("## Connect existing ENS: %s" % name, device=False)
+        dapp_view = self.ens_usernames_button.click()
+        dapp_view.element_by_translation_id("get-started").click()
+        if not is_stateofus:
+            dapp_view.element_by_translation_id("ens-want-custom-domain").click()
+        dapp_view.ens_name_input.send_keys(name)
+        expected_text = dapp_view.get_translation_by_key("ens-username-connected")
+        if not dapp_view.element_by_text_part(expected_text).is_element_displayed():
+            dapp_view.click_system_back_button()
+            dapp_view.element_by_text_part(expected_text).wait_for_element(30)
+        dapp_view.check_ens_name.click_until_presence_of_element(dapp_view.element_by_translation_id("ens-got-it"))
+        dapp_view.element_by_translation_id("ens-got-it").click()
+        self.driver.info("## ENS name is connected successfully!", device=False)
+        return dapp_view
+
+    @staticmethod
+    def return_mailserver_name(mailserver_name, fleet):
+        return mailserver_name + '.' + fleet
+
+    @property
+    def current_active_network(self):
+        self.advanced_button.click()
+        self.active_network_name.scroll_to_element(10, 'up')
+        return self.active_network_name.text
+
+    def get_sync_code(self):
+        # Pointing to legacy profile until feature is
+        self.syncing_button.scroll_and_click()
+        self.sync_plus_button.click()
+        self.slide_button_track.swipe_right_on_element(width_percentage=1.3)
+        self.password_input.send_keys(common_password)
+        self.login_button.click()
+        self.element_by_translation_id("copy-qr").click()
+        return self.driver.get_clipboard_text()

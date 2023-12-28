@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -eof pipefail
 
@@ -23,7 +23,7 @@ confirm() {
 load_config() {
   [[ -f merge-pr.conf ]] && . merge-pr.conf
   : ${OWNER:=status-im}
-  : ${REPO:=status-react}
+  : ${REPO:=status-mobile}
   : ${REMOTE:=origin}
   : ${BRANCH:=develop}
 }
@@ -35,6 +35,23 @@ check_pr_prereq() {
   if ! command -v curl >/dev/null; then
     fatal "curl(1) is not found, PR cannot be queried."
   fi
+}
+
+check_sync() {
+    git fetch
+    if [ -n "$(git rev-list $BRANCH..$REMOTE/$BRANCH)" ]; then
+      warn "the local branch $BRANCH is behind $REMOTE/$BRANCH."
+      echo "Do you want to cancel or do you prefer to abandon your work and reset local $BRANCH to $REMOTE/$BRANCH ?"
+      echo "cancel/reset"
+      read response;
+      if [ "$response" = "reset" ]; then
+          git fetch $REMOTE
+          git checkout $BRANCH
+          git reset --hard $REMOTE/$BRANCH
+      else
+          fatal "the local branch $BRANCH is behind $REMOTE/$BRANCH."
+      fi
+    fi
 }
 
 GH_URL_BASE="https://api.github.com"
@@ -87,6 +104,13 @@ check_is_pr_single_commit() {
   fi
 }
 
+request_to_squash() {
+  if [[ $(git rev-list $BRANCH..$PR_LOCAL_BRANCH | wc -l) -gt 1 ]] ;then
+    confirm "PR has multiple commits, do interactive rebase?"
+    git rebase -i $BRANCH
+  fi
+}
+
 confirm_pr() {
   git log -p $BRANCH..$PR_LOCAL_BRANCH
   confirm "Do you like this PR?"
@@ -133,11 +157,13 @@ EOF
   fi
   load_config
   check_pr_prereq
+  check_sync
   get_pr_info "$@"
   cleanup
   fetch_pr
   refresh_base_branch
   rebase_pr
+  request_to_squash
   check_is_pr_single_commit
   confirm_pr
   sign_pr
